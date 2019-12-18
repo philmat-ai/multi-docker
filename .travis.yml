@@ -1,0 +1,25 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t philmat-ai/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run philmat-ai/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t philmat-ai/multi-client ./client
+    - docker build -t philmat-ai/multi-nginx ./nginx
+    - docker build -t philmat-ai/multi-server ./server
+    - docker build -t philmat-ai/multi-worker ./worker
+
+#Log in to docker CLI
+    - echo >"$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+#Take those images and push them to AWS
+    - docker push philmat-ai/multi-client
+    - docker push philmat-ai/multi-nginx
+    - docker push philmat-ai/multi-server
+    - docker push philmat-ai/multi-worker
+    
